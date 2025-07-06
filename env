@@ -1,0 +1,25 @@
+# ---------------
+# RÉSEAU
+# ---------------
+
+START_IP='0.0.0.0'          # IP de début
+NETMASK=0                   # Masque de sous-réseau
+END_IP='255.255.255.255'    # IP de fin
+PORT=25565                  # Port Minecraft
+
+# ---------------
+# MINECRAFT
+# ---------------
+
+EDITION='java'      # java / bedrock
+VERSION=''          # Version de Minecraft ( Ex: 1.21.4 )
+ONLINE_PLAYERS=0    # Nombre de joueurs connectés minimum
+
+# ---------------
+# DISCORD
+# ---------------
+
+# URL du webhook
+WEBHOOK='WEBHOOK_URL'
+BOT_NAME='MinecraftScrapperBot' # Nom du webhook
+WEBHOOK_COLOR='3390ff'          # Couleur des embeds
