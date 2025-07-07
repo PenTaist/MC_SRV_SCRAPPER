@@ -127,7 +127,7 @@ python main.py
 
 - `masscan.txt` : Résultat brut du scan `masscan`
 - `sorted_masscan.txt` : Liste triée des IPs détectées
-- `valid_servers.json` : Liste des serveurs déjà trouvés
+- `valid_servers.json` & `invalid_servers.json` : Liste des serveurs déjà analysés
 - `motd.png` : Image du MOTD du serveur
 
 ---
