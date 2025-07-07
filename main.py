@@ -123,7 +123,8 @@ def send_discord(mc_stats):
         with open("motd.png", "rb") as motd_file:
             webhook.add_file(file=motd_file.read(), filename='motd.png')
     except:
-        os.remove('motd.png')
+        if os.path.exists('motd.png'):
+            os.remove('motd.png')
 
         with open("empty_motd.png", "rb") as empty_motd_file:
             webhook.add_file(file=empty_motd_file.read(), filename='empty_motd.png')
@@ -132,15 +133,10 @@ def send_discord(mc_stats):
 
     country = get_country(mc_srv_ip)
 
-    if mv_srv_players_list:
-        description = "@everyone Un serveur a été trouvé"
-    else:
-        description = "Un serveur a été trouvé"
-
     if country:
-        embed = DiscordEmbed(title=f":flag_{country}: Serveur trouvé !", description=description, color=DS_WEBHOOK_COLOR)
+        embed = DiscordEmbed(title=f":flag_{country}: Serveur trouvé !", description="Un serveur a été trouvé", color=DS_WEBHOOK_COLOR)
     else:
-        embed = DiscordEmbed(title="Serveur trouvé !", description=description, color=DS_WEBHOOK_COLOR)
+        embed = DiscordEmbed(title="Serveur trouvé !", description="Un serveur a été trouvé", color=DS_WEBHOOK_COLOR)
 
     if MC_VERSION:
         embed.add_embed_field(name='Édition de Minecraft', value=f'```{MC_EDITION}```', inline=True)
@@ -157,8 +153,9 @@ def send_discord(mc_stats):
 
         for player in mv_srv_players_list:
             clean_players_list.append(player['name_clean'])
-        
+
         embed.add_embed_field(name='Liste des joueurs', value=f'```{clean_players_list}```', inline=False)
+        webhook.content = '@everyone'
 
     if os.path.exists('motd.png'):
         embed.set_image(url='attachment://motd.png')
@@ -178,9 +175,15 @@ with open(MASSCAN_SORTED_FILE, 'r') as msf:
 if not os.path.exists('valid_servers.json'):
     with open('valid_servers.json', 'w') as f:
         json.dump({}, f)
+elif not os.path.exists('invalid_servers.json'):
+    with open('invalid_servers.json', 'w') as f:
+        json.dump({}, f)
 
 with open('valid_servers.json', 'r') as vsf:
     valid_servers_data = json.load(vsf)
+
+with open('invalid_servers.json', 'r') as vsf:
+    invalid_servers_data = json.load(vsf)
 
 for t_ip in ips:
     t_ip = t_ip.strip()
@@ -188,8 +191,10 @@ for t_ip in ips:
 
     if port_key not in valid_servers_data:
         valid_servers_data[port_key] = []
+    elif port_key not in invalid_servers_data:
+        invalid_servers_data[port_key] = []
 
-    if t_ip not in valid_servers_data[port_key]:
+    if t_ip not in valid_servers_data[port_key] and t_ip not in invalid_servers_data[port_key]:
         try:
             stats = get_mc_stats(ip=t_ip, port=PORT)
         except:
@@ -207,8 +212,13 @@ for t_ip in ips:
                 json.dump(valid_servers_data, vsf, ensure_ascii=False, indent=4)
         else:
             print(f'SERVEUR NON VALIDE : {t_ip}:{PORT}')
+
+            invalid_servers_data[port_key].append(t_ip)
+
+            with open('invalid_servers.json', 'w', encoding='utf-8') as vsf:
+                json.dump(invalid_servers_data, vsf, ensure_ascii=False, indent=4)
     else:
-        print(f'SERVEUR DÉJÀ DANS LA LISTE : {t_ip}:{PORT}')
+        print(f'IP DÉJÀ ANALYSÉE : {t_ip}:{PORT}')
 
 print('SCAN TERMINÉ !')
 
