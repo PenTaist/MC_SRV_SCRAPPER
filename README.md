@@ -89,7 +89,7 @@ python3 main.py
    - Ajoutez ce dossier au PATH système (Paramètres > Variables d’environnement).
 
 2. **Installer Python**  
-   - Installez Python 3.8+ depuis [python.org](https://www.python.org/downloads/windows/).  
+   - Installez Python 3.13+ depuis [python.org](https://www.python.org/downloads/windows/).  
    - Pendant l’installation, cochez "Add Python to PATH".
 
 3. **Installer les dépendances Python**
