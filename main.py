@@ -14,6 +14,7 @@ from discord_webhook import DiscordWebhook, DiscordEmbed
 from PIL import Image, ImageDraw, ImageFont
 from MinecraftIpToGuiImage.src import loader
 from time import sleep
+from mcstatus import JavaServer
 
 # -------------------------------------------------------------
 # Configuration des logs
@@ -118,6 +119,15 @@ def get_mc_stats(ip, port):
 
     return False
 
+def get_ping(ip, port):
+    try:
+        server = JavaServer.lookup(f'{ip}:{port}')
+        latency = int(server.ping())
+        return latency
+    except:
+        logger.warning('get_ping() --> Erreur')
+        return False
+
 def get_country(ip):
     url = f'http://ip-api.com/json/{ip}'
     req = requests.get(url)
@@ -150,7 +160,6 @@ def send_discord(mc_stats):
             webhook.add_file(file=empty_motd_file.read(), filename='empty_motd.png')
 
         logger.warning('send_discord() --> MOTD non récupéré')
-        print('Impossible de récupérer le MOTD !')
 
     country = get_country(mc_srv_ip)
 
@@ -167,6 +176,12 @@ def send_discord(mc_stats):
 
     embed.add_embed_field(name='IP', value=f'```{mc_srv_ip}```', inline=True)
     embed.add_embed_field(name='PORT', value=f'```{mc_srv_port}```', inline=True)
+
+    mc_srv_ping = get_ping(mc_srv_ip, mc_srv_port)
+
+    if mc_srv_ping:
+        embed.add_embed_field(name='Ping', value=f'```{mc_srv_ping} ms```', inline=False)
+
     embed.add_embed_field(name='Logiciel détécté', value=f'```{mc_srv_software}```', inline=False)
 
     if mv_srv_players_list:
