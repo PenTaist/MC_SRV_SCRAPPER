@@ -167,64 +167,76 @@ def send_discord(mc_stats):
     mc_srv_plugins = mc_stats['plugins']
     mc_srv_mods = mc_stats['mods']
 
-    try:
-        loader.loadandrun(serverip=f'{mc_srv_ip}:{mc_srv_port}', edition=MC_EDITION)
+    if os.path.exists('blacklist.json'):
+        with open('blacklist.json', 'r') as bf:
+            blacklist = json.load(bf)
+        
+        if mc_srv_mods['raw'] in blacklist:
+            blacklisted = True
+        else:
+            blacklisted = False
 
-        with open("motd.png", "rb") as motd_file:
-            webhook.add_file(file=motd_file.read(), filename='motd.png')
-    except:
+    if not blacklisted:
+        try:
+            loader.loadandrun(serverip=f'{mc_srv_ip}:{mc_srv_port}', edition=MC_EDITION)
+
+            with open("motd.png", "rb") as motd_file:
+                webhook.add_file(file=motd_file.read(), filename='motd.png')
+        except:
+            if os.path.exists('motd.png'):
+                os.remove('motd.png')
+
+            with open("empty_motd.png", "rb") as empty_motd_file:
+                webhook.add_file(file=empty_motd_file.read(), filename='empty_motd.png')
+
+            logger.warning('send_discord() --> MOTD non récupéré')
+
+        country = get_country(mc_srv_ip)
+
+        if country:
+            embed = DiscordEmbed(title=f":flag_{country}: Serveur trouvé !", description="Un serveur a été trouvé", color=DS_WEBHOOK_COLOR)
+        else:
+            embed = DiscordEmbed(title="Serveur trouvé !", description="Un serveur a été trouvé", color=DS_WEBHOOK_COLOR)
+
+        if MC_VERSION:
+            embed.add_embed_field(name='Édition de Minecraft', value=f'```{MC_EDITION}```', inline=True)
+            embed.add_embed_field(name='Version', value=f'```{MC_VERSION}```', inline=True)
+        else:
+            embed.add_embed_field(name='Édition de Minecraft', value=f'```{MC_EDITION}```', inline=False)
+
+        embed.add_embed_field(name='IP', value=f'```{mc_srv_ip}```', inline=True)
+        embed.add_embed_field(name='PORT', value=f'```{mc_srv_port}```', inline=True)
+
+        mc_srv_ping = get_ping(mc_srv_ip, mc_srv_port)
+
+        if mc_srv_ping:
+            embed.add_embed_field(name='Ping', value=f'```{mc_srv_ping} ms```', inline=False)
+
+        embed.add_embed_field(name='Logiciel détécté', value=f'```{mc_srv_software}```', inline=False)
+
+        if plugins:
+            embed.add_embed_field(name='Plugin(s) détécté(s)', value=f'```{mc_srv_plugins}```', inline=False)
+        elif mods:
+            embed.add_embed_field(name='Mod(s) détécté(s)', value=f'```{mc_srv_mods}```', inline=False)
+
+        if mc_srv_players_list:
+            clean_players_list = []
+
+            for player in mc_srv_players_list:
+                clean_players_list.append(player['name_clean'])
+
+            embed.add_embed_field(name='Liste des joueurs', value=f'```{clean_players_list}```', inline=False)
+            webhook.content = '@everyone'
+
         if os.path.exists('motd.png'):
-            os.remove('motd.png')
+            embed.set_image(url='attachment://motd.png')
+        else:
+            embed.set_image(url='attachment://empty_motd.png')
 
-        with open("empty_motd.png", "rb") as empty_motd_file:
-            webhook.add_file(file=empty_motd_file.read(), filename='empty_motd.png')
-
-        logger.warning('send_discord() --> MOTD non récupéré')
-
-    country = get_country(mc_srv_ip)
-
-    if country:
-        embed = DiscordEmbed(title=f":flag_{country}: Serveur trouvé !", description="Un serveur a été trouvé", color=DS_WEBHOOK_COLOR)
+        webhook.add_embed(embed)
+        webhook.execute()
     else:
-        embed = DiscordEmbed(title="Serveur trouvé !", description="Un serveur a été trouvé", color=DS_WEBHOOK_COLOR)
-
-    if MC_VERSION:
-        embed.add_embed_field(name='Édition de Minecraft', value=f'```{MC_EDITION}```', inline=True)
-        embed.add_embed_field(name='Version', value=f'```{MC_VERSION}```', inline=True)
-    else:
-        embed.add_embed_field(name='Édition de Minecraft', value=f'```{MC_EDITION}```', inline=False)
-
-    embed.add_embed_field(name='IP', value=f'```{mc_srv_ip}```', inline=True)
-    embed.add_embed_field(name='PORT', value=f'```{mc_srv_port}```', inline=True)
-
-    mc_srv_ping = get_ping(mc_srv_ip, mc_srv_port)
-
-    if mc_srv_ping:
-        embed.add_embed_field(name='Ping', value=f'```{mc_srv_ping} ms```', inline=False)
-
-    embed.add_embed_field(name='Logiciel détécté', value=f'```{mc_srv_software}```', inline=False)
-
-    if plugins:
-        embed.add_embed_field(name='Plugin(s) détécté(s)', value=f'```{mc_srv_plugins}```', inline=False)
-    elif mods:
-        embed.add_embed_field(name='Mod(s) détécté(s)', value=f'```{mc_srv_mods}```', inline=False)
-
-    if mc_srv_players_list:
-        clean_players_list = []
-
-        for player in mc_srv_players_list:
-            clean_players_list.append(player['name_clean'])
-
-        embed.add_embed_field(name='Liste des joueurs', value=f'```{clean_players_list}```', inline=False)
-        webhook.content = '@everyone'
-
-    if os.path.exists('motd.png'):
-        embed.set_image(url='attachment://motd.png')
-    else:
-        embed.set_image(url='attachment://empty_motd.png')
-
-    webhook.add_embed(embed)
-    webhook.execute()
+        logging.info('Serveur blacklisté')
 
 # -------------------------------------------------------------
 # Boucler sur les IP triés

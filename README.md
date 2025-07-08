@@ -12,6 +12,7 @@ Un outil de scan de serveurs Minecraft (Java/Bedrock), utilisant `masscan`, filt
 - Génération automatique d'une image MOTD
 - Envoi des résultats via Webhook Discord
 - Géolocalisation du serveur (pays)
+- Liste noire (basée sur le MOTD)
 
 ---
 
@@ -60,6 +61,16 @@ COUNTRY=''                  # (optionnel) Filtrer les pays
 WEBHOOK='WEBHOOK_URL'
 BOT_NAME='MinecraftScrapperBot'
 WEBHOOK_COLOR='3390ff'
+```
+
+Ajoutez des MOTD à la liste noire si besoin :
+
+```json
+{
+    "blacklist": [
+        "BLACKLISTED MOTD"
+    ]
+}
 ```
 
 ### 5. Lancement
