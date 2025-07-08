@@ -54,6 +54,7 @@ PORT=25565                  # Port Minecraft
 EDITION='java'              # java / bedrock
 VERSION=''                  # (optionnel) Ex: 1.21.4
 ONLINE_PLAYERS=0            # Nombre de joueurs minimum requis
+COUNTRY=''                  # (optionnel) Filtrer les pays
 
 # Discord
 WEBHOOK='WEBHOOK_URL'

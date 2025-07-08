@@ -46,6 +46,7 @@ PORT = os.getenv('PORT')
 MC_EDITION = os.getenv('EDITION')
 MC_VERSION = os.getenv('VERSION')
 MC_ONLINE_PLAYERS = int(os.getenv('ONLINE_PLAYERS'))
+MC_COUNTRY = os.getenv('COUNTRY')
 
 # Paramètres Discord
 DS_WEBHOOK = os.getenv('WEBHOOK')
@@ -101,21 +102,38 @@ def get_mc_stats(ip, port):
     res = json.loads(req.text)
 
     online = res['online']
+    server_country = get_country(ip)
 
     if online:
-        if MC_VERSION:
-            if MC_VERSION in res['version']['name_raw']:
+        if MC_COUNTRY:
+            if MC_COUNTRY == server_country:
+                if MC_VERSION:
+                    if MC_VERSION in res['version']['name_raw']:
+                        if MC_ONLINE_PLAYERS:
+                            if res['players']['online'] >= MC_ONLINE_PLAYERS:
+                                return res
+                        else:
+                            return res
+                else:
+                    if MC_ONLINE_PLAYERS:
+                        if res['players']['online'] >= MC_ONLINE_PLAYERS:
+                            return res
+                    else:
+                        return res
+        else:
+            if MC_VERSION:
+                if MC_VERSION in res['version']['name_raw']:
+                    if MC_ONLINE_PLAYERS:
+                        if res['players']['online'] >= MC_ONLINE_PLAYERS:
+                            return res
+                    else:
+                        return res
+            else:
                 if MC_ONLINE_PLAYERS:
                     if res['players']['online'] >= MC_ONLINE_PLAYERS:
                         return res
                 else:
                     return res
-        else:
-            if MC_ONLINE_PLAYERS:
-                if res['players']['online'] >= MC_ONLINE_PLAYERS:
-                    return res
-            else:
-                return res
 
     return False
 

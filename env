@@ -14,6 +14,7 @@ PORT=25565                  # Port Minecraft
 EDITION='java'      # java / bedrock
 VERSION=''          # Version de Minecraft ( Ex: 1.21.4 )
 ONLINE_PLAYERS=0    # Nombre de joueurs connectés minimum
+COUNTRY=''          # Pays ( Ex: fr, us, uk, etc... )
 
 # ---------------
 # DISCORD
