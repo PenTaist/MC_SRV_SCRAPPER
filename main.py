@@ -8,11 +8,19 @@ import requests
 import re
 import textwrap
 import base64
+import logging
 from dotenv import load_dotenv
 from discord_webhook import DiscordWebhook, DiscordEmbed
 from PIL import Image, ImageDraw, ImageFont
 from MinecraftIpToGuiImage.src import loader
 from time import sleep
+
+# -------------------------------------------------------------
+# Configuration des logs
+# -------------------------------------------------------------
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(filename='program.log', encoding='utf-8', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 
 # -------------------------------------------------------------
 # Importation des paramètres ( fichier .env )
@@ -46,8 +54,10 @@ MASSCAN_COMMAND = f'masscan -p{PORT} {START_IP}/{str(NETMASK)} --exclude 255.255
 if not os.path.exists(MASSCAN_FILE):
     try:
         os.system(MASSCAN_COMMAND)
+        logger.info('Lancement de la commande MasScan')
     except:
         print('Merci d\'installer l\'outil MasScan pour scanner les IP')
+        logger.warning('Outil MasScan non installé')
         exit()
 
 # -------------------------------------------------------------
@@ -66,6 +76,8 @@ if not os.path.exists(MASSCAN_SORTED_FILE):
     for ip in ips:
         with open(MASSCAN_SORTED_FILE, 'a') as msf:
             msf.write(ip+'\n')
+
+    logger.info('Fichier sorted_masscan.txt créé')
 
 # -------------------------------------------------------------
 # Définition des fonctions
@@ -107,6 +119,7 @@ def get_country(ip):
     if res['status'] == 'success':
         return res['countryCode'].lower()
     else:
+        logger.warning('get_country() --> Pays non récupéré')
         return None
 
 def send_discord(mc_stats):
@@ -129,7 +142,8 @@ def send_discord(mc_stats):
         with open("empty_motd.png", "rb") as empty_motd_file:
             webhook.add_file(file=empty_motd_file.read(), filename='empty_motd.png')
 
-        print('Cannot get MOTD image !')
+        logger.warning('send_discord() --> MOTD non récupéré')
+        print('Impossible de récupérer le MOTD !')
 
     country = get_country(mc_srv_ip)
 
@@ -169,64 +183,76 @@ def send_discord(mc_stats):
 # Boucler sur les IP triés
 # -------------------------------------------------------------
 
-with open(MASSCAN_SORTED_FILE, 'r') as msf:
-    ips = msf.readlines()
+try:
+    with open(MASSCAN_SORTED_FILE, 'r') as msf:
+        ips = msf.readlines()
 
-if not os.path.exists('valid_servers.json'):
-    with open('valid_servers.json', 'w') as f:
-        json.dump({}, f)
-elif not os.path.exists('invalid_servers.json'):
-    with open('invalid_servers.json', 'w') as f:
-        json.dump({}, f)
+    if not os.path.exists('valid_servers.json'):
+        with open('valid_servers.json', 'w') as f:
+            json.dump({}, f)
+    elif not os.path.exists('invalid_servers.json'):
+        with open('invalid_servers.json', 'w') as f:
+            json.dump({}, f)
 
-with open('valid_servers.json', 'r') as vsf:
-    valid_servers_data = json.load(vsf)
+    with open('valid_servers.json', 'r') as vsf:
+        valid_servers_data = json.load(vsf)
 
-with open('invalid_servers.json', 'r') as vsf:
-    invalid_servers_data = json.load(vsf)
+    with open('invalid_servers.json', 'r') as vsf:
+        invalid_servers_data = json.load(vsf)
 
-for t_ip in ips:
-    t_ip = t_ip.strip()
-    port_key = str(PORT)
+    for t_ip in ips:
+        t_ip = t_ip.strip()
+        port_key = str(PORT)
 
-    if port_key not in valid_servers_data:
-        valid_servers_data[port_key] = []
-    elif port_key not in invalid_servers_data:
-        invalid_servers_data[port_key] = []
+        if port_key not in valid_servers_data:
+            valid_servers_data[port_key] = []
+        elif port_key not in invalid_servers_data:
+            invalid_servers_data[port_key] = []
 
-    if t_ip not in valid_servers_data[port_key] and t_ip not in invalid_servers_data[port_key]:
-        try:
-            stats = get_mc_stats(ip=t_ip, port=PORT)
-        except:
-            print('Erreur à la récupération des statistiques ! Reprise dans 10 secondes...')
-            sleep(10)
-            continue
+        if t_ip not in valid_servers_data[port_key] and t_ip not in invalid_servers_data[port_key]:
+            try:
+                stats = get_mc_stats(ip=t_ip, port=PORT)
+            except:
+                print('Erreur à la récupération des statistiques ! Reprise dans 10 secondes...')
+                sleep(10)
+                continue
 
-        if stats:
-            print(f'SERVEUR TROUVÉ : {t_ip}:{PORT}')
+            if stats:
+                print(f'SERVEUR TROUVÉ : {t_ip}:{PORT}')
 
-            send_discord(mc_stats=stats)
-            valid_servers_data[port_key].append(t_ip)
+                send_discord(mc_stats=stats)
+                valid_servers_data[port_key].append(t_ip)
 
-            with open('valid_servers.json', 'w', encoding='utf-8') as vsf:
-                json.dump(valid_servers_data, vsf, ensure_ascii=False, indent=4)
+                with open('valid_servers.json', 'w', encoding='utf-8') as vsf:
+                    json.dump(valid_servers_data, vsf, ensure_ascii=False, indent=4)
+            else:
+                print(f'SERVEUR NON VALIDE : {t_ip}:{PORT}')
+
+                invalid_servers_data[port_key].append(t_ip)
+
+                with open('invalid_servers.json', 'w', encoding='utf-8') as vsf:
+                    json.dump(invalid_servers_data, vsf, ensure_ascii=False, indent=4)
         else:
-            print(f'SERVEUR NON VALIDE : {t_ip}:{PORT}')
+            print(f'IP DÉJÀ ANALYSÉE : {t_ip}:{PORT}')
 
-            invalid_servers_data[port_key].append(t_ip)
-
-            with open('invalid_servers.json', 'w', encoding='utf-8') as vsf:
-                json.dump(invalid_servers_data, vsf, ensure_ascii=False, indent=4)
-    else:
-        print(f'IP DÉJÀ ANALYSÉE : {t_ip}:{PORT}')
-
-print('SCAN TERMINÉ !')
+    logger.info('SCAN TERMINÉ !')
+    print('SCAN TERMINÉ !')
+except Exception as e:
+    logger.error(f'Erreur lors du bouclage sur les IP : {e}')
+    print('Un problème est survenu. Regarder les logs pour plus de détails.')
 
 # -------------------------------------------------------------
 # Néttoyage des fichiers
 # -------------------------------------------------------------
 
-if os.path.exists('motd.png'):
-    os.remove('motd.png')
-if os.path.exists(MASSCAN_SORTED_FILE):
-    os.remove(MASSCAN_SORTED_FILE)
+try:
+    if os.path.exists('motd.png'):
+        os.remove('motd.png')
+    if os.path.exists(MASSCAN_SORTED_FILE):
+        os.remove(MASSCAN_SORTED_FILE)
+
+    logger.info('Fichiers néttoyés')
+    print('Fichiers néttotés')
+except Exception as e:
+    logger.error(f'Erreur lors du néttoyage des fichiers : {e}')
+    print('Un problème est survenu. Regarder les logs pour plus de détails.')
