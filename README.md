@@ -84,7 +84,7 @@ python3 main.py
 ## 💻 Pour Windows
 
 1. **Installer Masscan**  
-   - Téléchargez la version Windows de [masscan ici](https://github.com/robertdavidgraham/masscan/releases).  
+   - Téléchargez la version Windows de [masscan ici](https://github.com/Arryboom/MasscanForWindows).
    - Décompressez l’archive et placez `masscan.exe` dans un dossier accessible (ex : `C:\masscan\`).  
    - Ajoutez ce dossier au PATH système (Paramètres > Variables d’environnement).
 
