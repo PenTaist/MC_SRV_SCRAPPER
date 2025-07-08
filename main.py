@@ -167,14 +167,14 @@ def send_discord(mc_stats):
     mc_srv_plugins = mc_stats['plugins']
     mc_srv_mods = mc_stats['mods']
 
+    blacklisted = False
+
     if os.path.exists('blacklist.json'):
         with open('blacklist.json', 'r') as bf:
             blacklist = json.load(bf)
         
-        if mc_srv_mods['raw'] in blacklist:
+        if any(mod in blacklist for mod in mc_srv_mods):
             blacklisted = True
-        else:
-            blacklisted = False
 
     if not blacklisted:
         try:
@@ -214,9 +214,9 @@ def send_discord(mc_stats):
 
         embed.add_embed_field(name='Logiciel détécté', value=f'```{mc_srv_software}```', inline=False)
 
-        if plugins:
+        if mc_srv_plugins:
             embed.add_embed_field(name='Plugin(s) détécté(s)', value=f'```{mc_srv_plugins}```', inline=False)
-        elif mods:
+        elif mc_srv_mods:
             embed.add_embed_field(name='Mod(s) détécté(s)', value=f'```{mc_srv_mods}```', inline=False)
 
         if mc_srv_players_list:
@@ -259,14 +259,20 @@ try:
     with open('invalid_servers.json', 'r') as vsf:
         invalid_servers_data = json.load(vsf)
 
+    if not isinstance(valid_servers_data, dict):
+        valid_servers_data = {}
+    if not isinstance(invalid_servers_data, dict):
+        invalid_servers_data = {}
+
+    port_key = str(PORT)
+
+    if port_key not in valid_servers_data:
+        valid_servers_data[port_key] = []
+    if port_key not in invalid_servers_data:
+        invalid_servers_data[port_key] = []
+
     for t_ip in ips:
         t_ip = t_ip.strip()
-        port_key = str(PORT)
-
-        if port_key not in valid_servers_data:
-            valid_servers_data[port_key] = []
-        elif port_key not in invalid_servers_data:
-            invalid_servers_data[port_key] = []
 
         if t_ip not in valid_servers_data[port_key] and t_ip not in invalid_servers_data[port_key]:
             try:
@@ -311,7 +317,7 @@ try:
         os.remove(MASSCAN_SORTED_FILE)
 
     logger.info('Fichiers néttoyés')
-    print('Fichiers néttotés')
+    print('Fichiers néttoyés')
 except Exception as e:
     logger.error(f'Erreur lors du néttoyage des fichiers : {e}')
     print('Un problème est survenu. Regarder les logs pour plus de détails.')
