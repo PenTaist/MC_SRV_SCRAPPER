@@ -145,7 +145,9 @@ def send_discord(mc_stats):
     mc_srv_software = mc_stats['version']['name_clean']
     mc_srv_ip = mc_stats['host']
     mc_srv_port = mc_stats['port']
-    mv_srv_players_list = mc_stats['players']['list']
+    mc_srv_players_list = mc_stats['players']['list']
+    mc_srv_plugins = mc_stats['plugins']
+    mc_srv_mods = mc_stats['mods']
 
     try:
         loader.loadandrun(serverip=f'{mc_srv_ip}:{mc_srv_port}', edition=MC_EDITION)
@@ -184,10 +186,15 @@ def send_discord(mc_stats):
 
     embed.add_embed_field(name='Logiciel détécté', value=f'```{mc_srv_software}```', inline=False)
 
-    if mv_srv_players_list:
+    if plugins:
+        embed.add_embed_field(name='Plugin(s) détécté(s)', value=f'```{mc_srv_plugins}```', inline=False)
+    elif mods:
+        embed.add_embed_field(name='Mod(s) détécté(s)', value=f'```{mc_srv_mods}```', inline=False)
+
+    if mc_srv_players_list:
         clean_players_list = []
 
-        for player in mv_srv_players_list:
+        for player in mc_srv_players_list:
             clean_players_list.append(player['name_clean'])
 
         embed.add_embed_field(name='Liste des joueurs', value=f'```{clean_players_list}```', inline=False)
