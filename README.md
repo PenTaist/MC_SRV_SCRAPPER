@@ -41,12 +41,6 @@ pip install -r requirements.txt
 
 ### 4. Configuration
 
-Renommez le fichier `env` en `.env` :
-
-```bash
-mv env .env
-```
-
 Modifiez les variables à l’intérieur selon vos besoins :
 
 ```env
@@ -94,11 +88,7 @@ python -m venv venv
 pip install -r requirements.txt
 ```
 
-4. **Configuration**
-
-Renommez `env` en `.env` (vous pouvez faire ça dans l’explorateur ou via PowerShell) et modifiez-le selon vos besoins.
-
-5. **Exécuter le script**
+4. **Exécuter le script**
 
 Ouvrez PowerShell ou CMD, placez-vous dans le dossier du projet et lancez :
 
@@ -129,6 +119,7 @@ python main.py
 - `sorted_masscan.txt` : Liste triée des IPs détectées
 - `valid_servers.json` & `invalid_servers.json` : Liste des serveurs déjà analysés
 - `motd.png` : Image du MOTD du serveur
+- `program.log` : Fichier de logs
 
 ---
 
