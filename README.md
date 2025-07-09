@@ -28,8 +28,8 @@ Un outil de scan de serveurs Minecraft (Java/Bedrock), utilisant `masscan`, filt
 ### 2. Clone du dépôt
 
 ```bash
-git clone https://github.com/votre-utilisateur/minecraft-server-scanner.git
-cd minecraft-server-scanner
+git clone https://github.com/PenTaist/MC_SRV_SCRAPPER.git
+cd MC_SRV_SCRAPPER
 ```
 
 ### 3. Installation des dépendances Python
