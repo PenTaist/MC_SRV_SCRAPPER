@@ -106,34 +106,43 @@ if not os.path.exists(MASSCAN_SORTED_FILE):
 # -------------------------------------------------------------
 
 def get_mc_stats(ip, port):
-    if MC_EDITION == 'bedrock':
-        url = f'https://api.mcstatus.io/v2/status/bedrock/{ip}:{port}'
-    else:
-        url = f'https://api.mcstatus.io/v2/status/java/{ip}:{port}'
-    
-    req = requests.get(url)
-    res = json.loads(req.text)
+    global detected_mc_edition
 
-    online = res['online']
+    if MC_EDITION == 'java':
+        url = f'https://api.mcstatus.io/v2/status/java/{ip}:{port}'
+
+        req = requests.get(url)
+        res = json.loads(req.text)
+
+        if not res['online']:
+            return False
+    elif MC_EDITION == 'bedrock':
+        url = f'https://api.mcstatus.io/v2/status/bedrock/{ip}:{port}'
+
+        req = requests.get(url)
+        res = json.loads(req.text)
+
+        if not res['online']:
+            return False
+    else:
+        req = requests.get(f'https://api.mcstatus.io/v2/status/java/{ip}:{port}')
+        res = json.loads(req.text)
+
+        if res['online']:
+            detected_mc_edition = 'java'
+        else:
+            req = requests.get(f'https://api.mcstatus.io/v2/status/bedrock/{ip}:{port}')
+            res = json.loads(req.text)
+
+            if res['online']:
+                detected_mc_edition = 'bedrock'
+            else:
+                return False
+
     server_country = get_country(ip)
 
-    if online:
-        if MC_COUNTRY:
-            if MC_COUNTRY == server_country:
-                if MC_VERSION:
-                    if MC_VERSION in res['version']['name_raw']:
-                        if MC_ONLINE_PLAYERS:
-                            if res['players']['online'] >= MC_ONLINE_PLAYERS:
-                                return res
-                        else:
-                            return res
-                else:
-                    if MC_ONLINE_PLAYERS:
-                        if res['players']['online'] >= MC_ONLINE_PLAYERS:
-                            return res
-                    else:
-                        return res
-        else:
+    if MC_COUNTRY:
+        if MC_COUNTRY == server_country:
             if MC_VERSION:
                 if MC_VERSION in res['version']['name_raw']:
                     if MC_ONLINE_PLAYERS:
@@ -147,6 +156,20 @@ def get_mc_stats(ip, port):
                         return res
                 else:
                     return res
+    else:
+        if MC_VERSION:
+            if MC_VERSION in res['version']['name_raw']:
+                if MC_ONLINE_PLAYERS:
+                    if res['players']['online'] >= MC_ONLINE_PLAYERS:
+                        return res
+                else:
+                    return res
+        else:
+            if MC_ONLINE_PLAYERS:
+                if res['players']['online'] >= MC_ONLINE_PLAYERS:
+                    return res
+            else:
+                return res
 
     return False
 
@@ -191,7 +214,10 @@ def send_discord(mc_stats):
 
     if not blacklisted:
         try:
-            loader.loadandrun(serverip=f'{mc_srv_ip}:{mc_srv_port}', edition=MC_EDITION)
+            if MC_EDITION:
+                loader.loadandrun(serverip=f'{mc_srv_ip}:{mc_srv_port}', edition=MC_EDITION)
+            else:
+                loader.loadandrun(serverip=f'{mc_srv_ip}:{mc_srv_port}', edition=detected_mc_edition)
 
             with open("motd.png", "rb") as motd_file:
                 webhook.add_file(file=motd_file.read(), filename='motd.png')
@@ -212,10 +238,17 @@ def send_discord(mc_stats):
             embed = DiscordEmbed(title="Serveur trouvé !", description="Un serveur a été trouvé", color=DS_WEBHOOK_COLOR)
 
         if MC_VERSION:
-            embed.add_embed_field(name='Édition de Minecraft', value=f'```{MC_EDITION}```', inline=True)
+            if MC_EDITION:
+                embed.add_embed_field(name='Édition de Minecraft', value=f'```{MC_EDITION}```', inline=True)
+            else:
+                embed.add_embed_field(name='Édition de Minecraft', value=f'```{detected_mc_edition}```', inline=True)
+
             embed.add_embed_field(name='Version', value=f'```{MC_VERSION}```', inline=True)
         else:
-            embed.add_embed_field(name='Édition de Minecraft', value=f'```{MC_EDITION}```', inline=False)
+            if MC_EDITION:
+                embed.add_embed_field(name='Édition de Minecraft', value=f'```{MC_EDITION}```', inline=True)
+            else:
+                embed.add_embed_field(name='Édition de Minecraft', value=f'```{detected_mc_edition}```', inline=True)
 
         embed.add_embed_field(name='IP', value=f'```{mc_srv_ip}```', inline=True)
         embed.add_embed_field(name='PORT', value=f'```{mc_srv_port}```', inline=True)

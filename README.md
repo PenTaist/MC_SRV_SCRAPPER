@@ -52,7 +52,7 @@ END_IP='255.255.255.255'    # IP de fin
 PORT=25565                  # Port Minecraft
 
 # Minecraft
-EDITION='java'              # java / bedrock
+EDITION=''                  # (optionnel) java / bedrock
 VERSION=''                  # (optionnel) Ex: 1.21.4
 ONLINE_PLAYERS=0            # Nombre de joueurs minimum requis
 COUNTRY=''                  # (optionnel) Filtrer les pays
@@ -68,7 +68,8 @@ Ajoutez des MOTD à la liste noire si besoin :
 ```json
 {
     "blacklist": [
-        "BLACKLISTED MOTD"
+        "BLACKLISTED MOTD 1",
+        "BLACKLISTED MOTD 2"
     ]
 }
 ```
@@ -132,6 +133,7 @@ python main.py
 - `valid_servers.json` & `invalid_servers.json` : Liste des serveurs déjà analysés
 - `motd.png` : Image du MOTD du serveur
 - `program.log` : Fichier de logs
+- `valid_servers.json.bak` & `invalid_servers.json.bak` : Sauvegarde des listes (simple précaution)
 
 ---
 
