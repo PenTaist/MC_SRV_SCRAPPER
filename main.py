@@ -9,12 +9,25 @@ import re
 import textwrap
 import base64
 import logging
+import shutil
 from dotenv import load_dotenv
 from discord_webhook import DiscordWebhook, DiscordEmbed
 from PIL import Image, ImageDraw, ImageFont
 from MinecraftIpToGuiImage.src import loader
 from time import sleep
 from mcstatus import JavaServer
+
+# -------------------------------------------------------------
+# Sauvegardes des listes de serveurs si existantes
+# -------------------------------------------------------------
+
+if os.path.exists('valid_servers.json'):
+    os.remove('valid_servers.json.bak')
+    shutil.copyfile('valid_servers.json', 'valid_servers.json.bak')
+
+if os.path.exists('invalid_servers.json'):
+    os.remove('invalid_servers.json.bak')
+    shutil.copyfile('invalid_servers.json', 'invalid_servers.json.bak')
 
 # -------------------------------------------------------------
 # Configuration des logs
@@ -256,23 +269,23 @@ try:
     with open('valid_servers.json', 'r') as vsf:
         valid_servers_data = json.load(vsf)
 
+    if not isinstance(valid_servers_data, dict):
+        valid_servers_data = {}
+
     with open('invalid_servers.json', 'r') as vsf:
         invalid_servers_data = json.load(vsf)
 
-    if not isinstance(valid_servers_data, dict):
-        valid_servers_data = {}
     if not isinstance(invalid_servers_data, dict):
         invalid_servers_data = {}
 
-    port_key = str(PORT)
-
-    if port_key not in valid_servers_data:
-        valid_servers_data[port_key] = []
-    if port_key not in invalid_servers_data:
-        invalid_servers_data[port_key] = []
-
     for t_ip in ips:
         t_ip = t_ip.strip()
+        port_key = str(PORT)
+
+        if port_key not in valid_servers_data:
+            valid_servers_data[port_key] = []
+        if port_key not in invalid_servers_data:
+            invalid_servers_data[port_key] = []
 
         if t_ip not in valid_servers_data[port_key] and t_ip not in invalid_servers_data[port_key]:
             try:
